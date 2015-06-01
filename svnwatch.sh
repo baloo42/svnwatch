@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 #
 # svnwatch - watch file or directory and git commit all changes as they happen
 #
@@ -33,7 +33,7 @@
 #   and will abort if either command (or `which`) is not found.
 #
 
-SLEEP_TIME=2
+SLEEP_TIME=10
 TIMEOUT=300
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by svnwatch.sh"
@@ -166,7 +166,6 @@ while true; do
         delete_files=$(echo $stat|grep '^[D!][[:space:]]')
         if [[ $delete_files != '' ]]; then
                 for file in $delete_files; do
-			echo "$file"
 			echo "$file" | grep "[!?]" >/dev/null
 			if [ $? -ne 0 ]; then $SVN delete $file; fi
                 done
@@ -179,7 +178,6 @@ while true; do
         add_files=$(echo $stat|grep '^[A?][[:space:]]')
         if [[ $add_files != '' ]]; then
                 for file in $add_files; do
-			echo "$file"
 			echo "$file" | grep "[!?]" >/dev/null
 			if [ $? -ne 0 ]; then $SVN add $file; fi
                 done
