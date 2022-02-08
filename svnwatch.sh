@@ -33,8 +33,6 @@
 #   and will abort if either command (or `which`) is not found.
 #
 
-set -x
-
 SLEEP_TIME=2
 TIMEOUT=300
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
