@@ -33,7 +33,7 @@
 #   and will abort if either command (or `which`) is not found.
 #
 
-SLEEP_TIME=10
+SLEEP_TIME=2
 TIMEOUT=300
 DATE_FMT="+%Y-%m-%d %H:%M:%S"
 COMMITMSG="Scripted auto-commit on change (%d) by svnwatch.sh"
@@ -149,7 +149,6 @@ cd $TARGETDIR # CD into right dir
 svn status 2>&1 | grep W155007 > /dev/null
 if [ $? -ne 1 ]; then stderr "Error: Target is not in a svn working dir"; exit 1; fi
 
-
 # main program loop: wait for changes and commit them
 while true; do
     $INCOMMAND # wait for changes
@@ -159,32 +158,30 @@ while true; do
     fi
     cd $TARGETDIR # CD into right dir
 
-    stat=$($SVN status)
+    IFS=$'\n'
 
-    if [[ $stat != '' ]]; then
-        # Do we have any files to delete?
-        delete_files=$(echo $stat|grep '^[D!][[:space:]]')
-        if [[ $delete_files != '' ]]; then
-                for file in $delete_files; do
-			echo "$file" | grep "[!?]" >/dev/null
-			if [ $? -ne 0 ]; then $SVN delete $file; fi
+    stat=($($SVN status))
+
+    if [[ ${#stat[@]} -ne 0 ]]; then
+        # Do we have any file to delete?
+        delete_files=($($SVN status | awk '/^[D!][[:space:]]/ {$1=""; print $0}' | cut -b 2-))
+        if [[ ${#delete_files[@]} -ne 0 ]]; then
+                for file in "${delete_files[@]}"; do
+                	$SVN delete "$file"
                 done
         fi
 
-	stat=$($SVN status)
-
-
         # Do we have any files to add?
-        add_files=$(echo $stat|grep '^[A?][[:space:]]')
-        if [[ $add_files != '' ]]; then
-                for file in $add_files; do
-			echo "$file" | grep "[!?]" >/dev/null
-			if [ $? -ne 0 ]; then $SVN add $file; fi
+        add_files=($($SVN status | awk '/^[A?][[:space:]]/ {$1=""; print $0}' | cut -b 2-))
+        if [[ ${#add_files[@]} -ne 0 ]]; then
+                for file in "${add_files[@]}"; do
+			$SVN add "$file"
                 done
         fi
 
 	$SVN update $SVN_COMMIT_ARGS
 	$SVN commit $SVN_COMMIT_ARGS -m "$FORMATTED_COMMITMSG" # construct commit message and commit
    fi
+   unset IFS
 done
 
